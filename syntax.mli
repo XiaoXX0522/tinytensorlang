@@ -46,6 +46,9 @@ type term =
   | TmTimes of info * term * term
   | TmDiv of info * term *term
   | TmMatMult of info * term * term
+  | TmProduct of info * term * term
+  | TmDirectsum of info * term * term
+  | TmContract of info * int * int * term
 
 type binding =
     NameBind 

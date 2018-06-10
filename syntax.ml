@@ -47,6 +47,9 @@ type term =
   | TmTimes of info * term * term
   | TmDiv of info * term * term
   | TmMatMult of info * term * term
+  | TmProduct of info * term * term
+  | TmDirectsum of info * term * term
+  | TmContract of info * int * int * term
 
 type binding =
     NameBind 
@@ -152,6 +155,9 @@ let tmmap onvar ontype c t =
   | TmTimes(fi,t1,t2) -> TmTimes(fi, walk c t1, walk c t2)
   | TmDiv(fi,t1,t2) -> TmDiv(fi, walk c t1, walk c t2)
   | TmMatMult(fi,t1,t2) -> TmMatMult(fi, walk c t1, walk c t2)
+  | TmProduct(fi,t1,t2) -> TmProduct(fi, walk c t1, walk c t2)
+  | TmDirectsum(fi,t1,t2) -> TmDirectsum(fi, walk c t1, walk c t2)
+  | TmContract(fi,i,j,t1) -> TmContract(fi, i, j, walk c t1)
   in walk c t
 
 let typeShiftAbove d c tyT =
@@ -261,6 +267,9 @@ let tmInfo t = match t with
   | TmTimes(fi,_,_) -> fi
   | TmDiv(fi,_,_) -> fi
   | TmMatMult(fi,_,_) -> fi
+  | TmProduct(fi,_,_) -> fi
+  | TmDirectsum(fi,_,_) -> fi
+  | TmContract(fi,_,_,_) -> fi
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
@@ -419,6 +428,14 @@ and printtm_AppTerm outer ctx t = match t with
       printtm_ATerm false ctx t1; pr " / "; printtm_ATerm false ctx t2;
   | TmMatMult(_,t1,t2) ->
       printtm_ATerm false ctx t1; pr " @ "; printtm_ATerm false ctx t2;
+  | TmProduct(_,t1,t2) ->
+      pr "product "; printtm_ATerm false ctx t1; 
+      pr " "; printtm_ATerm false ctx t2;
+  | TmDirectsum(_,t1,t2) ->
+      pr "directsum "; printtm_ATerm false ctx t1; 
+      pr " "; printtm_ATerm false ctx t2;
+  | TmContract(_,i,j,t1) ->
+      printf "contract %d %d" i j; printtm_ATerm false ctx t1
   | t -> printtm_PathTerm outer ctx t
 
 and printtm_AscribeTerm outer ctx t = match t with

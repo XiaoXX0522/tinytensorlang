@@ -37,6 +37,9 @@ let reservedWords = [
   ("iszero", fun i -> Parser.ISZERO i);
   ("Nat", fun i -> Parser.NAT i);
   ("Tensor", fun i -> Parser.TENSOR i);
+  ("product", fun i -> Parser.PRODUCT i);
+  ("directsum", fun i -> Parser.DIRECTSUM i);
+  ("contract", fun i -> Parser.CONTRACT i);
   
   (* Symbols *)
   ("_", fun i -> Parser.USCORE i);

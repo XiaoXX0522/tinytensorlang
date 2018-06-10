@@ -49,6 +49,9 @@ open Tensorhelper
 %token <Support.Error.info> ISZERO
 %token <Support.Error.info> NAT
 %token <Support.Error.info> TENSOR
+%token <Support.Error.info> PRODUCT
+%token <Support.Error.info> DIRECTSUM
+%token <Support.Error.info> CONTRACT
 
 /* Identifier and constant value tokens */
 %token <string Support.Error.withinfo> UCID  /* uppercase-initial */
@@ -270,6 +273,12 @@ AppTerm :
       { fun ctx -> TmDiv($2, $1 ctx, $3 ctx) }
   | PathTerm AT PathTerm
       { fun ctx -> TmMatMult($2, $1 ctx, $3 ctx) }
+  | PRODUCT PathTerm PathTerm
+      { fun ctx -> TmProduct($1, $2 ctx, $3 ctx) }
+  | DIRECTSUM PathTerm PathTerm
+      { fun ctx -> TmDirectsum($1, $2 ctx, $3 ctx) }
+  | CONTRACT INTV INTV PathTerm
+      { fun ctx -> TmContract($1, $2.v, $3.v, $4 ctx) }
 
 AscribeTerm :
     ATerm AS Type
@@ -326,8 +335,8 @@ ATerm :
             | n -> TmSucc($1.i, f (n-1))
           in f $1.v }
   | LSQUARE TensorFields RSQUARE
-      { let shape = checkshape $2 in 
-        let data = makearray $2 in 
+      { let shape = check_shape $2 in 
+        let data = make_array $2 in 
         fun ctx ->
           TmTensor($1, shape, data) }
 
