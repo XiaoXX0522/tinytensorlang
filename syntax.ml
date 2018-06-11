@@ -49,7 +49,9 @@ type term =
   | TmMatMult of info * term * term
   | TmProduct of info * term * term
   | TmDirectsum of info * term * term
+  | TmAppend of info * term * term
   | TmContract of info * int * int * term
+  | TmTrans of info * int * int * term
 
 type binding =
     NameBind 
@@ -157,7 +159,9 @@ let tmmap onvar ontype c t =
   | TmMatMult(fi,t1,t2) -> TmMatMult(fi, walk c t1, walk c t2)
   | TmProduct(fi,t1,t2) -> TmProduct(fi, walk c t1, walk c t2)
   | TmDirectsum(fi,t1,t2) -> TmDirectsum(fi, walk c t1, walk c t2)
+  | TmAppend(fi,t1,t2) -> TmAppend(fi, walk c t1, walk c t2)
   | TmContract(fi,i,j,t1) -> TmContract(fi, i, j, walk c t1)
+  | TmTrans(fi,i,j,t1) -> TmTrans(fi, i, j, walk c t1)
   in walk c t
 
 let typeShiftAbove d c tyT =
@@ -269,7 +273,9 @@ let tmInfo t = match t with
   | TmMatMult(fi,_,_) -> fi
   | TmProduct(fi,_,_) -> fi
   | TmDirectsum(fi,_,_) -> fi
+  | TmAppend(fi,_,_) -> fi
   | TmContract(fi,_,_,_) -> fi
+  | TmTrans(fi,_,_,_) -> fi
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
@@ -434,8 +440,13 @@ and printtm_AppTerm outer ctx t = match t with
   | TmDirectsum(_,t1,t2) ->
       pr "directsum "; printtm_ATerm false ctx t1; 
       pr " "; printtm_ATerm false ctx t2;
+  | TmAppend(_,t1,t2) ->
+      pr "append "; printtm_ATerm false ctx t1; 
+      pr " "; printtm_ATerm false ctx t2;
   | TmContract(_,i,j,t1) ->
-      printf "contract %d %d" i j; printtm_ATerm false ctx t1
+      printf "contract %d %d " i j; printtm_ATerm false ctx t1
+  | TmTrans(_,i,j,t1) ->
+      printf "trans %d %d " i j; printtm_ATerm false ctx t1
   | t -> printtm_PathTerm outer ctx t
 
 and printtm_AscribeTerm outer ctx t = match t with
@@ -497,7 +508,7 @@ and printtm_ATerm outer ctx t = match t with
       if len = 1 then (printf "%4.2f" array.(start))
       else (printf "%4.2f" array.(start); print_space(); pv (start+1) (len-1) array)
     in let rec pm start mshape array : unit = 
-      let vnum::vlen::_ = mshape in 
+      let vnum,vlen = match mshape with [a;b] -> (a,b) | _ -> assert false in 
       if vnum = 1 then (pr "[ "; obox0(); (pv start vlen array); cbox(); pr " ]")
       else (pr "[ "; obox0(); (pv start vlen array); cbox(); pr " ]"; print_space(); pm (start+vlen) [(vnum-1); vlen] array)
     in let rec pt start tshape array : unit = match tshape with 

@@ -48,7 +48,9 @@ type term =
   | TmMatMult of info * term * term
   | TmProduct of info * term * term
   | TmDirectsum of info * term * term
+  | TmAppend of info * term * term
   | TmContract of info * int * int * term
+  | TmTrans of info * int * int * term
 
 type binding =
     NameBind 

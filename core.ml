@@ -140,6 +140,16 @@ let rec eval1 ctx t = match t with
       pr "Needed to implement"; raise NoRuleApplies
   | TmMatMult(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
+  | TmProduct(fi,t1,t2) ->
+      pr "Needed to implement"; raise NoRuleApplies
+  | TmDirectsum(fi,t1,t2) ->
+      pr "Needed to implement"; raise NoRuleApplies
+  | TmAppend(fi,t1,t2) ->
+      pr "Needed to implement"; raise NoRuleApplies
+  | TmContract(fi,i,j,t1) ->
+      pr "Needed to implement"; raise NoRuleApplies
+  | TmTrans(fi,i,j,t1) ->
+      pr "Needed to implement"; raise NoRuleApplies
   | _ -> 
       raise NoRuleApplies
 
@@ -379,10 +389,81 @@ let rec typeof ctx t =
       let tyT2 = simplifyty ctx tyT2 in 
       (match (tyT1,tyT2) with
           (TyTensor(s1),TyTensor(s2)) -> 
-            let size1::revrest1 = List.rev s1 in
-            let size2::rest2 = s2 in
+            let size1,revrest1 = match List.rev s1 with a::b -> (a,b) | _ -> assert false in
+            let size2,rest2 = match s2 with a::b -> (a,b) | _ -> assert false in
             if size1 = size2 then
               let newshape = List.append (List.rev revrest1) rest2 in
-              TyTensor(newshape)
+              if newshape = [] then TyFloat
+              else TyTensor(newshape)
             else error fi "arguments' shapes do not match"
         | (_,_) -> error fi "argument is not a tensor")
+  | TmProduct(fi,t1,t2) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT2 = typeof ctx t2 in
+      let tyT1 = simplifyty ctx tyT1 in
+      let tyT2 = simplifyty ctx tyT2 in 
+      (match (tyT1,tyT2) with
+          (TyTensor(s1),TyTensor(s2)) -> 
+            let newshape = List.append s1 s2 in
+            TyTensor(newshape)
+        | (_,_) -> error fi "argument is not a tensor")
+  | TmDirectsum(fi,t1,t2) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT2 = typeof ctx t2 in
+      let tyT1 = simplifyty ctx tyT1 in
+      let tyT2 = simplifyty ctx tyT2 in 
+      (match (tyT1,tyT2) with
+          (TyTensor(s1),TyTensor(s2)) -> 
+            if List.length s1 = List.length s2 then
+              let newshape = List.map2 ( + ) s1 s2 in
+              TyTensor(newshape)
+            else error fi "two tensor with different rank cannot be direct summed"
+        | (_,_) -> error fi "argument is not a tensor")
+  | TmAppend(fi,t1,t2) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT2 = typeof ctx t2 in
+      let tyT1 = simplifyty ctx tyT1 in
+      let tyT2 = simplifyty ctx tyT2 in 
+      (match (tyT1,tyT2) with
+          (TyTensor(s1),TyTensor(s2)) -> 
+            let size1,rest1 = match s1 with a::b -> (a,b) | _ -> assert false in
+            let size2,rest2 = match s2 with a::b -> (a,b) | _ -> assert false in
+            if rest1 = rest2 then
+              let newshape = (size1+size2)::rest1 in
+              TyTensor(newshape)
+            else error fi "append only concates the first dimension of tensors"
+        | (_,_) -> error fi "argument is not a tensor")
+  | TmContract(fi,i,j,t1) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT1 = simplifyty ctx tyT1 in
+      (match tyT1 with
+          TyTensor(s1) -> 
+            (if i = j then error fi "contraction on same dimension is not allowed" 
+            else let i, j = (min i j), (max i j) in
+            try if List.nth s1 (i-1) = List.nth s1 (j-1) then
+                let rec dropij n = function
+                  | [] -> []
+                  | h :: t -> if n = i || n = j then dropij (n+1) t else h :: dropij (n+1) t in
+                let newshape = dropij 1 s1 in
+                if newshape = [] then TyFloat
+                else TyTensor(newshape)
+              else error fi "contraction on dimensions with different size is not allowed"
+            with Invalid_argument _ | Failure _ -> error fi "contraction dimension out of range")
+        | _ -> error fi "argument is not a tensor")
+  | TmTrans(fi,i,j,t1) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT1 = simplifyty ctx tyT1 in
+      (match tyT1 with
+          TyTensor(s1) -> 
+            (if i = j then error fi "transpose on same dimension is not allowed" 
+            else let i, j = (min i j), (max i j) in
+            try let s_i, s_j = (List.nth s1 (i-1)), (List.nth s1 (j-1)) in
+                let rec changeij n = function
+                  | [] -> []
+                  | h :: t -> if n = i then s_j :: changeij (n+1) t 
+                              else if n = j then s_i :: t
+                              else h :: changeij (n+1) t in
+                let newshape = changeij 1 s1 in
+                TyTensor(newshape)
+            with Invalid_argument _ | Failure _ -> error fi "transpose dimension out of range")
+        | _ -> error fi "argument is not a tensor")

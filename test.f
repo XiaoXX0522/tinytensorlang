@@ -47,3 +47,11 @@ vec = [1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0];
 nn + nn;
 nn + 1.0;
 1.0 + nn;
+
+product vec vec;
+directsum vec vec;
+directsum nn nn;
+append nn nn;
+contract 1 2 nn;
+contract 1 2 (product nn vec);
+trans 1 2 nn;

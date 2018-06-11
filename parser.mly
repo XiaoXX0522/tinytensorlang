@@ -51,7 +51,9 @@ open Tensorhelper
 %token <Support.Error.info> TENSOR
 %token <Support.Error.info> PRODUCT
 %token <Support.Error.info> DIRECTSUM
+%token <Support.Error.info> APPEND
 %token <Support.Error.info> CONTRACT
+%token <Support.Error.info> TRANS
 
 /* Identifier and constant value tokens */
 %token <string Support.Error.withinfo> UCID  /* uppercase-initial */
@@ -277,8 +279,12 @@ AppTerm :
       { fun ctx -> TmProduct($1, $2 ctx, $3 ctx) }
   | DIRECTSUM PathTerm PathTerm
       { fun ctx -> TmDirectsum($1, $2 ctx, $3 ctx) }
+  | APPEND PathTerm PathTerm
+      { fun ctx -> TmAppend($1, $2 ctx, $3 ctx) }
   | CONTRACT INTV INTV PathTerm
       { fun ctx -> TmContract($1, $2.v, $3.v, $4 ctx) }
+  | TRANS INTV INTV PathTerm
+      { fun ctx -> TmTrans($1, $2.v, $3.v, $4 ctx) }
 
 AscribeTerm :
     ATerm AS Type
