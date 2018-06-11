@@ -52,6 +52,7 @@ type term =
   | TmAppend of info * term * term
   | TmContract of info * int * int * term
   | TmTrans of info * int * int * term
+  | TmReshape of info * int list * term
 
 type binding =
     NameBind 
@@ -162,6 +163,7 @@ let tmmap onvar ontype c t =
   | TmAppend(fi,t1,t2) -> TmAppend(fi, walk c t1, walk c t2)
   | TmContract(fi,i,j,t1) -> TmContract(fi, i, j, walk c t1)
   | TmTrans(fi,i,j,t1) -> TmTrans(fi, i, j, walk c t1)
+  | TmReshape(fi,ns,t1) -> TmReshape(fi, ns, walk c t1)
   in walk c t
 
 let typeShiftAbove d c tyT =
@@ -276,6 +278,7 @@ let tmInfo t = match t with
   | TmAppend(fi,_,_) -> fi
   | TmContract(fi,_,_,_) -> fi
   | TmTrans(fi,_,_,_) -> fi
+  | TmReshape(fi,_,_) -> fi
 
 (* ---------------------------------------------------------------------- *)
 (* Printing *)
@@ -447,6 +450,12 @@ and printtm_AppTerm outer ctx t = match t with
       printf "contract %d %d " i j; printtm_ATerm false ctx t1
   | TmTrans(_,i,j,t1) ->
       printf "trans %d %d " i j; printtm_ATerm false ctx t1
+  | TmReshape(_,ns,t1) ->
+      let rec pl = function 
+          [] -> ()
+        | [i] -> pr (string_of_int i)
+        | i::rest -> pr (string_of_int i); pr ", "; pl rest
+      in pr "reshape ["; pl ns; pr "] "; printtm_ATerm false ctx t1
   | t -> printtm_PathTerm outer ctx t
 
 and printtm_AscribeTerm outer ctx t = match t with

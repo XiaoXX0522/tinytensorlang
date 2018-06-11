@@ -51,6 +51,7 @@ type term =
   | TmAppend of info * term * term
   | TmContract of info * int * int * term
   | TmTrans of info * int * int * term
+  | TmReshape of info * int list * term
 
 type binding =
     NameBind 

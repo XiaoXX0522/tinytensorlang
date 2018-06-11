@@ -54,6 +54,7 @@ open Tensorhelper
 %token <Support.Error.info> APPEND
 %token <Support.Error.info> CONTRACT
 %token <Support.Error.info> TRANS
+%token <Support.Error.info> RESHAPE
 
 /* Identifier and constant value tokens */
 %token <string Support.Error.withinfo> UCID  /* uppercase-initial */
@@ -285,6 +286,8 @@ AppTerm :
       { fun ctx -> TmContract($1, $2.v, $3.v, $4 ctx) }
   | TRANS INTV INTV PathTerm
       { fun ctx -> TmTrans($1, $2.v, $3.v, $4 ctx) }
+  | RESHAPE LSQUARE ilist = separated_list(COMMA, INTV) RSQUARE tm = PathTerm
+      { fun ctx -> TmReshape($1, List.map (fun ii -> ii.v) ilist, tm ctx)}
 
 AscribeTerm :
     ATerm AS Type

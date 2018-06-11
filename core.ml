@@ -150,6 +150,8 @@ let rec eval1 ctx t = match t with
       pr "Needed to implement"; raise NoRuleApplies
   | TmTrans(fi,i,j,t1) ->
       pr "Needed to implement"; raise NoRuleApplies
+  | TmReshape(fi,ns,t1) ->
+      pr "Needed to implement"; raise NoRuleApplies
   | _ -> 
       raise NoRuleApplies
 
@@ -466,4 +468,12 @@ let rec typeof ctx t =
                 let newshape = changeij 1 s1 in
                 TyTensor(newshape)
             with Invalid_argument _ | Failure _ -> error fi "transpose dimension out of range")
+        | _ -> error fi "argument is not a tensor")
+  | TmReshape(fi,ns1,t1) ->
+      let tyT1 = typeof ctx t1 in
+      let tyT1 = simplifyty ctx tyT1 in
+      (match tyT1 with
+          TyTensor(s1) -> 
+            (if Tensorhelper.prod s1 = Tensorhelper.prod ns1 then TyTensor(ns1)
+            else error fi "total size does not match")
         | _ -> error fi "argument is not a tensor")

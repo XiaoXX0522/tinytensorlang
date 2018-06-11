@@ -42,6 +42,7 @@ let reservedWords = [
   ("append", fun i -> Parser.APPEND i);
   ("contract", fun i -> Parser.CONTRACT i);
   ("trans", fun i -> Parser.TRANS i);
+  ("reshape", fun i -> Parser.RESHAPE i);
   
   (* Symbols *)
   ("_", fun i -> Parser.USCORE i);

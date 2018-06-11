@@ -55,3 +55,4 @@ append nn nn;
 contract 1 2 nn;
 contract 1 2 (product nn vec);
 trans 1 2 nn;
+reshape [81] nn;
