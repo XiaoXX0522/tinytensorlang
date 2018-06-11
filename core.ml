@@ -138,8 +138,27 @@ let rec eval1 ctx t = match t with
       pr "Needed to implement"; raise NoRuleApplies
   | TmDiv(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
+  | TmMatMult(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
+      let newshape = List.append (List.rev @@ List.tl @@ List.rev s1) (List.tl s2) in
+      let newsize = Tensorhelper.prod newshape in 
+      let newdata = Array.init newsize
+        (fun idx -> 
+          let lidx = Tensorhelper.fold_index newshape idx in
+          let li1,li2 = Tensorhelper.split lidx ((List.length s1) - 1) in
+          let iteri = Tensorhelper.range (List.hd s2) in 
+          let iterprod = List.map 
+            (fun ii -> 
+              d1.(Tensorhelper.flat_index s1 (List.append li1 [ii]))
+              *. d2.(Tensorhelper.flat_index s2 (ii :: li2))) 
+             iteri in
+          Tensorhelper.sumf iterprod) in
+      TmTensor(fi,newshape,newdata)
+  | TmMatMult(fi,(TmTensor _ as t1), t2) ->
+      let t2' = eval1 ctx t2 in
+      TmMatMult(fi,t1,t2')
   | TmMatMult(fi,t1,t2) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmMatMult(fi,t1',t2) 
   | TmProduct(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmDirectsum(fi,t1,t2) ->

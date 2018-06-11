@@ -1,10 +1,31 @@
-  let prod = fun lst -> List.fold_left ( * ) 1 lst
+let prod = fun lst -> List.fold_left ( * ) 1 lst
 
-  let rec calc_index shape index = 
-    match (shape, index) with
-        (_, []) -> 0
-      | (shd::stl, ihd::itl) -> shd * ihd + calc_index stl itl
-      | (_, _::_) -> raise (Invalid_argument "index's dimension larger than tensor's")
+let sumf = fun lst -> List.fold_left ( +. ) 0. lst
+
+let rec flat_index shape index = 
+  match (shape, index) with
+      (_, []) -> 0
+    | (shd::stl, ihd::itl) -> (prod stl) * ihd + flat_index stl itl
+    | ([], _::_) -> raise (Invalid_argument "index's dimension larger than tensor's")
+
+let rec fold_index shape index = 
+  if index >= prod shape then raise (Invalid_argument "index out of bounds") else
+  match shape with
+      [] -> raise (Invalid_argument "shape is empty list")
+    | [l] -> [index] 
+    | hd::tl -> let rshape = prod tl in index / rshape :: fold_index tl (index mod rshape)
+
+let split list n =
+  let rec aux i acc = function
+    | [] -> List.rev acc, []
+    | h :: t as l -> if i = 0 then List.rev acc, l
+                       else aux (i-1) (h :: acc) t  in
+  aux n [] list
+
+let rec range ?(start=0) len =
+    if start >= len
+    then []
+    else start :: (range len ~start:(start+1))
 
 type tensordata = 
   | Scalar of float

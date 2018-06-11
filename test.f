@@ -48,6 +48,8 @@ nn + nn;
 nn + 1.0;
 1.0 + nn;
 
+nn @ vec;
+
 product vec vec;
 directsum vec vec;
 directsum nn nn;
