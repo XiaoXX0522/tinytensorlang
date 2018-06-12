@@ -217,9 +217,15 @@ let rec eval1 ctx t = match t with
   | TmDirectsum(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmAppend(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
-      let newshape = List.append (List.hd s2 + List.hd s2) (List.tl s2) in
+      let newshape = List.append (List.hd s1 + List.hd s2) (List.tl s2) in
       let newdata = Array.append (d1) (d2) in
       TmTensor(fi,newshape,newdata)
+  | TmAppend(fi,(TmTensor _ as t1), t2) ->
+      let t2' = eval1 ctx t2 in
+      TmAppend(fi,t1,t2')
+  | TmAppend(fi,t1,t2) ->
+      let t1' = eval1 ctx t1 in
+      TmAppend(fi,t1',t2) 
   | TmContract(fi,i,j,t1) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmTrans(fi,i,j,t1) ->
