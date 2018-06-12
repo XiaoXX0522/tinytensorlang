@@ -5,3 +5,4 @@ f
 lexer.ml
 parser.ml
 parser.mli
+.DS_Store

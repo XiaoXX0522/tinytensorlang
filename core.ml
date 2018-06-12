@@ -220,6 +220,12 @@ let rec eval1 ctx t = match t with
       let newshape = List.hd s1 + List.hd s2 :: List.tl s2 in
       let newdata = Array.append d1 d2 in
       TmTensor(fi,newshape,newdata)
+  | TmAppend(fi,(TmTensor _ as t1), t2) ->
+      let t2' = eval1 ctx t2 in
+      TmAppend(fi,t1,t2')
+  | TmAppend(fi,t1,t2) ->
+      let t1' = eval1 ctx t1 in
+      TmAppend(fi,t1',t2) 
   | TmContract(fi,i,j,TmTensor(_,s1,d1)) ->
       let i,j = (min i j), (max i j) in
       let tmp1,tmp2 = Tensorhelper.split s1 (j-1) in
@@ -246,10 +252,23 @@ let rec eval1 ctx t = match t with
   | TmContract(fi,i,j,t1) ->
       let t1' = eval1 ctx t1 in
       TmContract(fi,i,j,t1')
+  | TmTrans(fi,i,j,TmTensor(_,s1,d1)) ->
+      let newshape = Tensorhelper.swap s1 i j in
+      let newsize = Tensorhelper.prod newshape in 
+      let newdata = Array.init newsize
+        (fun idx -> 
+          let idx1 = Tensorhelper.fold_index newshape idx in
+          let idx2 = Tensorhelper.swap idx1 i j in
+          d1.(Tensorhelper.flat_index s1 idx2)) in
+      TmTensor(fi,newshape,newdata)
   | TmTrans(fi,i,j,t1) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmTrans(fi,i,j,t1')
+  | TmReshape(fi,ns,TmTensor(_,s1,d1)) ->
+      TmTensor(fi,ns,d1)
   | TmReshape(fi,ns,t1) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmReshape(fi,ns,t1')
   | _ -> 
       raise NoRuleApplies
 
