@@ -516,16 +516,9 @@ let rec typeof ctx t =
       let tyT1 = simplifyty ctx tyT1 in
       (match tyT1 with
           TyTensor(s1) -> 
-            (if i = j then error fi "transpose on same dimension is not allowed" 
-            else let i, j = (min i j), (max i j) in
-            try let s_i, s_j = (List.nth s1 (i-1)), (List.nth s1 (j-1)) in
-                let rec changeij n = function
-                  | [] -> []
-                  | h :: t -> if n = i then s_j :: changeij (n+1) t 
-                              else if n = j then s_i :: t
-                              else h :: changeij (n+1) t in
-                let newshape = changeij 1 s1 in
-                TyTensor(newshape)
+            (if i = j then error fi "transpose on same dimension is not allowed" else
+            try let newshape = Tensorhelper.swap s1 i j in
+              TyTensor(newshape)
             with Invalid_argument _ | Failure _ -> error fi "transpose dimension out of range")
         | _ -> error fi "argument is not a tensor")
   | TmReshape(fi,ns1,t1) ->
