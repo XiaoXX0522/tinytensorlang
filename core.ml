@@ -220,8 +220,32 @@ let rec eval1 ctx t = match t with
       let newshape = List.hd s1 + List.hd s2 :: List.tl s2 in
       let newdata = Array.append d1 d2 in
       TmTensor(fi,newshape,newdata)
+  | TmContract(fi,i,j,TmTensor(_,s1,d1)) ->
+      let i,j = (min i j), (max i j) in
+      let tmp1,tmp2 = Tensorhelper.split s1 (j-1) in
+      let cz,sub3 = match tmp2 with h::t -> (h,t) | [] -> assert false in
+      let sub1,tmpm = Tensorhelper.split tmp1 (i-1) in
+      let sub2 = List.tl tmpm in
+      let newshape = List.concat [sub1; sub2; sub3] in
+      let newsize = Tensorhelper.prod newshape in 
+      let newdata = Array.init newsize
+        (fun idx -> 
+          let lidx = Tensorhelper.fold_index newshape idx in
+          let li1,rest = Tensorhelper.split lidx (List.length sub1) in
+          let li2,li3 = Tensorhelper.split rest (List.length sub2) in
+          let iteri = Tensorhelper.range cz in 
+          let iternum = List.map 
+            (fun ii -> 
+              let oid = Tensorhelper.flat_index s1 @@ 
+                        List.concat [li1;[ii];li2;[ii];li3]
+              in d1.(oid))
+            iteri in
+          Tensorhelper.sumf iternum) in
+      if newsize = 1 then TmFloat(fi,newdata.(0)) 
+      else TmTensor(fi,newshape,newdata)
   | TmContract(fi,i,j,t1) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmContract(fi,i,j,t1')
   | TmTrans(fi,i,j,t1) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmReshape(fi,ns,t1) ->

@@ -11,7 +11,7 @@ let rec flat_index shape index =
 let rec fold_index shape index = 
   if index >= prod shape then raise (Invalid_argument "index out of bounds") else
   match shape with
-      [] -> raise (Invalid_argument "shape is empty list")
+      [] -> []
     | [l] -> [index] 
     | hd::tl -> let rshape = prod tl in index / rshape :: fold_index tl (index mod rshape)
 

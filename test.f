@@ -49,6 +49,7 @@ nn / 1.0;
 1.0 * nn;
 
 nn @ vec;
+vec @ vec;
 product vec vec;
 
 directsum vec vec;
