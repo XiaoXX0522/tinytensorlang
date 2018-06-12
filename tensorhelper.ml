@@ -22,6 +22,12 @@ let split list n =
                        else aux (i-1) (h :: acc) t  in
   aux n [] list
 
+let swap list i j = 
+  List.mapi (fun idx ele -> match idx with 
+                x when x = i-1 -> List.nth list (j-1) 
+              | x when x = j-1 -> List.nth list (i-1)
+              | _ -> ele) list
+
 let rec range ?(start=0) len =
     if start >= len
     then []
