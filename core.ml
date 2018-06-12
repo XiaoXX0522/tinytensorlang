@@ -214,8 +214,25 @@ let rec eval1 ctx t = match t with
   | TmProduct(fi,t1,t2) ->
       let t1' = eval1 ctx t1 in
       TmProduct(fi,t1',t2) 
+  | TmDirectsum(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
+      let newshape = List.map2 ( + ) s1 s2 in
+      let newsize = Tensorhelper.prod newshape in
+      let newdata = Array.init newsize 
+        (fun idx -> 
+          let lidx = Tensorhelper.fold_index newshape idx in
+          let subidx = List.map2 ( - ) lidx s1 in
+          if List.for_all (fun i -> i<0) subidx then 
+            d1.(Tensorhelper.flat_index s1 lidx)
+          else if List.for_all (fun i -> i>=0) subidx then
+            d2.(Tensorhelper.flat_index s2 subidx)
+          else 0.0) in
+      TmTensor(fi,newshape,newdata)
+  | TmDirectsum(fi,(TmTensor _ as t1), t2) ->
+      let t2' = eval1 ctx t2 in
+      TmDirectsum(fi,t1,t2')
   | TmDirectsum(fi,t1,t2) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmDirectsum(fi,t1',t2) 
   | TmAppend(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
       let newshape = List.hd s1 + List.hd s2 :: List.tl s2 in
       let newdata = Array.append d1 d2 in
