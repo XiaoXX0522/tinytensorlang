@@ -188,8 +188,8 @@ let rec eval1 ctx t = match t with
           let iterprod = List.map 
             (fun ii -> 
               d1.(Tensorhelper.flat_index s1 (List.append li1 [ii]))
-              *. d2.(Tensorhelper.flat_index s2 (ii :: li2))) 
-             iteri in
+              *. d2.(Tensorhelper.flat_index s2 (ii :: li2)))
+            iteri in
           Tensorhelper.sumf iterprod) in
       if newsize = 1 then TmFloat(fi,newdata.(0)) 
       else TmTensor(fi,newshape,newdata)
@@ -199,8 +199,21 @@ let rec eval1 ctx t = match t with
   | TmMatMult(fi,t1,t2) ->
       let t1' = eval1 ctx t1 in
       TmMatMult(fi,t1',t2) 
+  | TmProduct(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
+      let newshape = List.append s1 s2 in
+      let newsize = Tensorhelper.prod newshape in 
+      let newdata = Array.init newsize
+        (fun idx -> 
+          let lidx = Tensorhelper.fold_index newshape idx in
+          let li1,li2 = Tensorhelper.split lidx (List.length s1) in
+          d1.(Tensorhelper.flat_index s1 li1) *. d2.(Tensorhelper.flat_index s2 li2)) in
+      TmTensor(fi,newshape,newdata)
+  | TmProduct(fi,(TmTensor _ as t1), t2) ->
+      let t2' = eval1 ctx t2 in
+      TmProduct(fi,t1,t2')
   | TmProduct(fi,t1,t2) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmProduct(fi,t1',t2) 
   | TmDirectsum(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmAppend(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
