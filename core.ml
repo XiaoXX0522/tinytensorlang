@@ -147,15 +147,15 @@ let rec eval1 ctx t = match t with
       let t1' = eval1 ctx t1 in
       TmSub(fi,t1',t2) 
   | TmTimes(fi,TmFloat(_,f1),TmFloat(_,f2)) ->
-      TmFloat(fi, f1 * f2)
+      TmFloat(fi, f1 *. f2)
   | TmTimes(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
-      let newdata = Array.map2 ( * ) d1 d2 in
+      let newdata = Array.map2 ( *. ) d1 d2 in
       TmTensor(fi, s1, newdata)
   | TmTimes(fi,TmFloat(_,f1),TmTensor(_,s2,d2)) ->
-      let newdata = Array.map (fun ff -> ff * f1) d2 in
+      let newdata = Array.map (fun ff -> ff *. f1) d2 in
       TmTensor(fi, s2, newdata)
   | TmTimes(fi,TmTensor(_,s1,d1),TmFloat(_,f2)) ->
-      let newdata = Array.map (fun ff -> ff * f2) d1 in
+      let newdata = Array.map (fun ff -> ff *. f2) d1 in
       TmTensor(fi, s1, newdata)
   | TmTimes(fi,(TmFloat _|TmTensor _ as t1), t2) ->
       let t2' = eval1 ctx t2 in
@@ -164,12 +164,12 @@ let rec eval1 ctx t = match t with
       let t1' = eval1 ctx t1 in
       TmTimes(fi,t1',t2)
   | TmDiv(fi,TmFloat(_,f1),TmFloat(_,f2)) ->
-      TmFloat(fi, f1 / f2)
+      TmFloat(fi, f1 /. f2)
   | TmDiv(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
-      let newdata = Array.map2 ( / ) d1 d2 in
+      let newdata = Array.map2 ( /. ) d1 d2 in
       TmTensor(fi, s1, newdata)
   | TmDiv(fi,TmTensor(_,s1,d1),TmFloat(_,f2)) ->
-      let newdata = Array.map (fun ff -> ff / f2) d1 in
+      let newdata = Array.map (fun ff -> ff /. f2) d1 in
       TmTensor(fi, s1, newdata)
   | TmDiv(fi,(TmFloat _|TmTensor _ as t1), t2) ->
       let t2' = eval1 ctx t2 in
@@ -203,8 +203,10 @@ let rec eval1 ctx t = match t with
       pr "Needed to implement"; raise NoRuleApplies
   | TmDirectsum(fi,t1,t2) ->
       pr "Needed to implement"; raise NoRuleApplies
-  | TmAppend(fi,t1,t2) ->
-      pr "Needed to implement"; raise NoRuleApplies
+  | TmAppend(fi,TmTensor(_,s1,d1),TmTensor(_,s2,d2)) ->
+      let newshape = List.append (List.hd s2 + List.hd s2) (List.tl s2) in
+      let newdata = Array.append (d1) (d2) in
+      TmTensor(fi,newshape,newdata)
   | TmContract(fi,i,j,t1) ->
       pr "Needed to implement"; raise NoRuleApplies
   | TmTrans(fi,i,j,t1) ->
