@@ -240,8 +240,11 @@ let rec eval1 ctx t = match t with
   | TmTrans(fi,i,j,t1) ->
       let t1' = eval1 ctx t1 in
       TmTrans(fi,i,j,t1')
+  | TmReshape(fi,ns,TmTensor(_,s1,d1)) ->
+      TmTensor(fi,ns,d1)
   | TmReshape(fi,ns,t1) ->
-      pr "Needed to implement"; raise NoRuleApplies
+      let t1' = eval1 ctx t1 in
+      TmReshape(fi,ns,t1')
   | _ -> 
       raise NoRuleApplies
 
