@@ -191,7 +191,7 @@ let rec eval1 ctx t = match t with
               *. d2.(Tensorhelper.flat_index s2 (ii :: li2)))
             iteri in
           Tensorhelper.sumf iterprod) in
-      if newsize = 1 then TmFloat(fi,newdata.(0)) 
+      if newshape = [] then TmFloat(fi,newdata.(0)) 
       else TmTensor(fi,newshape,newdata)
   | TmMatMult(fi,(TmTensor _ as t1), t2) ->
       let t2' = eval1 ctx t2 in
@@ -264,7 +264,7 @@ let rec eval1 ctx t = match t with
               in d1.(oid))
             iteri in
           Tensorhelper.sumf iternum) in
-      if newsize = 1 then TmFloat(fi,newdata.(0)) 
+      if newshape = [] then TmFloat(fi,newdata.(0)) 
       else TmTensor(fi,newshape,newdata)
   | TmContract(fi,i,j,t1) ->
       let t1' = eval1 ctx t1 in
